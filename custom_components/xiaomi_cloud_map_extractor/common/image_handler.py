@@ -60,9 +60,25 @@ class ImageHandler:
                    COLOR_ROOM_14, COLOR_ROOM_15, COLOR_ROOM_16]
 
     @staticmethod
+    def load_bg_image(image_width, image_height, alpha=50, bg_file_path="/config/www/map_tmp.png") -> ImageType:
+        image_orig = Image.open(f"{bg_file_path}").convert('RGBA')
+        image_rsz = image_orig.resize(
+           (int(image_width), int(image_height)), 
+           resample=Image.NEAREST)
+        data=image_rsz.getdata()  #you'll get a list of tuples
+        newData=[]
+        for a in data:
+            a=a[:3] #you'll get your tuple shorten to RGB
+            a=a+(alpha,) #change the 100 to any transparency number you like between (0,255)
+            newData.append(a)
+        image_rsz.putdata(newData) #you'll get your new img ready
+        return image_rsz
+
+    @staticmethod
     def create_empty_map_image(colors, text="NO MAP") -> ImageType:
         color = ImageHandler.__get_color__(COLOR_MAP_OUTSIDE, colors)
         image = Image.new('RGBA', (300, 200), color=color)
+        #image = Image.open(f"/local/map_tmp.png") 
         if sum(color[0:3]) > 382:
             text_color = (0, 0, 0)
         else:

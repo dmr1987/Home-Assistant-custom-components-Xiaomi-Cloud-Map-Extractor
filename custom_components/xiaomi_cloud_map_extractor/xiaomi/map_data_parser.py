@@ -58,7 +58,8 @@ class MapDataParserXiaomi(MapDataParser):
             elif block_type == MapDataParserXiaomi.IMAGE:
                 img_start = block_start_position
                 image, rooms = MapDataParserXiaomi.parse_image(block_data_length, block_header_length, data, header,
-                                                               colors, image_config)
+                                                               colors, image_config, 
+                                                bg_image_use, bg_image_path, bg_image_alpha)
                 map_data.image = image
                 map_data.rooms = rooms
             elif block_type == MapDataParserXiaomi.ROBOT_POSITION:
@@ -125,7 +126,8 @@ class MapDataParserXiaomi(MapDataParser):
         return room
 
     @staticmethod
-    def parse_image(block_data_length, block_header_length, data, header, colors, image_config):
+    def parse_image(block_data_length, block_header_length, data, header, colors, image_config, 
+                                                bg_image_use, bg_image_path, bg_image_alpha):
         image_size = block_data_length
         image_top = MapDataParserXiaomi.get_int32(header, block_header_length - 16)
         image_left = MapDataParserXiaomi.get_int32(header, block_header_length - 12)
@@ -148,6 +150,10 @@ class MapDataParserXiaomi(MapDataParser):
                                  MapDataParserXiaomi.image_to_map(room[1] + image_top),
                                  MapDataParserXiaomi.image_to_map(room[2] + image_left),
                                  MapDataParserXiaomi.image_to_map(room[3] + image_top))
+
+        if bg_image_use:
+            bg_image_layer = ImageHandlerViomi.load_bg_image(int(image.width), int(image.height), bg_image_alpha, bg_image_path)
+
         return ImageData(image_size,
                          image_top,
                          image_left,
@@ -155,6 +161,8 @@ class MapDataParserXiaomi(MapDataParser):
                          image_width,
                          image_config,
                          image, MapDataParserXiaomi.map_to_image), rooms
+                         #MAYBE ADD AS IN VIOMI VACUUM  
+                         #additional_layers={DRAWABLE_BG_IMAGE: bg_image_layer}
 
     @staticmethod
     def parse_goto_target(data):

@@ -10,9 +10,9 @@ class RoidmiVacuum(XiaomiCloudVacuumV2):
     def __init__(self, connector, country, user_id, device_id, model):
         super().__init__(connector, country, user_id, device_id, model)
 
-    def decode_map(self, raw_map, colors, drawables, texts, sizes, image_config) -> MapData:
+    def decode_map(self, raw_map, colors, drawables, texts, sizes, image_config, bg_image_use, bg_image_path, bg_image_alpha) -> MapData:
         unzipped = gzip.decompress(raw_map)
-        return MapDataParserRoidmi.parse(unzipped, colors, drawables, texts, sizes, image_config)
+        return MapDataParserRoidmi.parse(unzipped, colors, drawables, texts, sizes, image_config, bg_image_use, bg_image_path, bg_image_alpha)
 
     def get_map_archive_extension(self):
         return "gz"

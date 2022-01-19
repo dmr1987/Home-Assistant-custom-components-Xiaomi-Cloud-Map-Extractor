@@ -108,6 +108,9 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_STORE_MAP_RAW, default=False): cv.boolean,
         vol.Optional(CONF_STORE_MAP_IMAGE, default=False): cv.boolean,
         vol.Optional(CONF_STORE_MAP_PATH, default="/tmp"): cv.string,
+        vol.Optional(CONF_BG_IMAGE_USE, default=False): cv.boolean,
+        vol.Optional(CONF_BG_IMAGE_PATH, default="/config/www/map_tmp.png"): cv.string,
+        vol.Optional(CONF_BG_IMAGE_ALPHA, default=50): cv.byte,
         vol.Optional(CONF_FORCE_API, default=None): vol.Or(vol.In(CONF_AVAILABLE_APIS), vol.Equal(None))
     })
 
@@ -136,16 +139,21 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     store_map_raw = config[CONF_STORE_MAP_RAW]
     store_map_image = config[CONF_STORE_MAP_IMAGE]
     store_map_path = config[CONF_STORE_MAP_PATH]
+    bg_image_use = config[CONF_BG_IMAGE_USE]
+    bg_image_path = config[CONF_BG_IMAGE_PATH]
+    bg_image_alpha = config[CONF_BG_IMAGE_ALPHA]
     force_api = config[CONF_FORCE_API]
     entity_id = generate_entity_id(ENTITY_ID_FORMAT, name, hass=hass)
     async_add_entities([VacuumCamera(entity_id, host, token, username, password, country, name, should_poll,
                                      image_config, colors, drawables, sizes, texts, attributes, store_map_raw,
-                                     store_map_image, store_map_path, force_api)])
+                                     store_map_image, store_map_path, force_api,
+                                     bg_image_use,bg_image_path,bg_image_alpha)])
 
 
 class VacuumCamera(Camera):
     def __init__(self, entity_id, host, token, username, password, country, name, should_poll, image_config, colors,
-                 drawables, sizes, texts, attributes, store_map_raw, store_map_image, store_map_path, force_api):
+                 drawables, sizes, texts, attributes, store_map_raw, store_map_image, store_map_path, force_api,
+                 bg_image_use,bg_image_path,bg_image_alpha):
         super().__init__()
         self.entity_id = entity_id
         self.content_type = CONTENT_TYPE
@@ -173,6 +181,9 @@ class VacuumCamera(Camera):
         self._logged_in_previously = True
         self._received_map_name_previously = True
         self._country = country
+        self._bg_image_use = bg_image_use
+        self._bg_image_path = bg_image_path
+        self._bg_image_alpha = bg_image_alpha
 
     async def async_added_to_hass(self) -> None:
         self.async_schedule_update_ha_state(True)
@@ -316,7 +327,9 @@ class VacuumCamera(Camera):
         _LOGGER.debug("Retrieving map from Xiaomi cloud")
         store_map_path = self._store_map_path if self._store_map_raw else None
         map_data, map_stored = self._device.get_map(map_name, self._colors, self._drawables, self._texts,
-                                                    self._sizes, self._image_config, store_map_path)
+                                                    self._sizes, self._image_config, store_map_path,
+                                                    self._bg_image_use, self._bg_image_path, self._bg_image_alpha)
+
         if map_data is not None:
             # noinspection PyBroadException
             try:

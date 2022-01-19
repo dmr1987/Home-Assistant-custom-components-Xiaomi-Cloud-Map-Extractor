@@ -23,9 +23,9 @@ class XiaomiVacuum(XiaomiCloudVacuum):
             return None
         return api_response["result"]["url"]
 
-    def decode_map(self, raw_map, colors, drawables, texts, sizes, image_config) -> MapData:
+    def decode_map(self, raw_map, colors, drawables, texts, sizes, image_config, bg_image_use, bg_image_path, bg_image_alpha) -> MapData:
         unzipped = gzip.decompress(raw_map)
-        return MapDataParserXiaomi.parse(unzipped, colors, drawables, texts, sizes, image_config)
+        return MapDataParserXiaomi.parse(unzipped, colors, drawables, texts, sizes, image_config, bg_image_use, bg_image_path, bg_image_alpha)
 
     def should_get_map_from_vacuum(self):
         return True

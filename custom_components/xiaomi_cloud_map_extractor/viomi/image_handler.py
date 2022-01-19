@@ -88,4 +88,6 @@ class ImageHandlerViomi(ImageHandler):
                     (int(trimmed_width * scale), int(trimmed_height * scale)), resample=Image.NEAREST)
         if len(unknown_pixels) > 0:
             _LOGGER.warning('unknown pixel_types: %s', unknown_pixels)
+
         return image, rooms, cleaned_areas, cleaned_areas_layer
+

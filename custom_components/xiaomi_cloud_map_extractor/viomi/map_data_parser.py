@@ -97,7 +97,8 @@ class MapDataParserViomi(MapDataParser):
     POSITION_UNKNOWN = 1100
 
     @staticmethod
-    def parse(raw: bytes, colors, drawables, texts, sizes, image_config) -> MapData:
+    def parse(raw: bytes, colors, drawables, texts, sizes, image_config, 
+                                                bg_image_use, bg_image_path, bg_image_alpha) -> MapData:
         map_data = MapData(0, 1)
         buf = ParsingBuffer('header', raw, 0, len(raw))
         feature_flags = buf.get_uint32('feature_flags')
@@ -111,7 +112,8 @@ class MapDataParserViomi(MapDataParser):
         if feature_flags & MapDataParserViomi.FEATURE_IMAGE != 0:
             MapDataParserViomi.parse_section(buf, 'image', map_id)
             map_data.image, map_data.rooms, map_data.cleaned_rooms = \
-                MapDataParserViomi.parse_image(buf, colors, image_config, DRAWABLE_CLEANED_AREA in drawables)
+                MapDataParserViomi.parse_image(buf, colors, image_config, DRAWABLE_CLEANED_AREA in drawables, 
+                                                bg_image_use, bg_image_path, bg_image_alpha)
 
         if feature_flags & MapDataParserViomi.FEATURE_HISTORY != 0:
             MapDataParserViomi.parse_section(buf, 'history', map_id)
@@ -194,7 +196,8 @@ class MapDataParserViomi(MapDataParser):
         return None
 
     @staticmethod
-    def parse_image(buf: ParsingBuffer, colors: Dict, image_config: Dict, draw_cleaned_area: bool) \
+    def parse_image(buf: ParsingBuffer, colors: Dict, image_config: Dict, draw_cleaned_area: bool, 
+                                                bg_image_use, bg_image_path, bg_image_alpha) \
             -> Tuple[ImageData, Dict[int, Room], Set[int]]:
         buf.skip('unknown1', 0x08)
         image_top = 0
@@ -218,6 +221,10 @@ class MapDataParserViomi(MapDataParser):
         image, rooms_raw, cleaned_areas, cleaned_areas_layer = ImageHandlerViomi.parse(buf, image_width, image_height,
                                                                                        colors, image_config,
                                                                                        draw_cleaned_area)
+
+        if bg_image_use:
+            bg_image_layer = ImageHandlerViomi.load_bg_image(int(image.width), int(image.height), bg_image_alpha, bg_image_path)
+
         _LOGGER.debug('img: number of rooms: %d, numbers: %s', len(rooms_raw), rooms_raw.keys())
         rooms = {}
         for number, room in rooms_raw.items():
@@ -225,6 +232,11 @@ class MapDataParserViomi(MapDataParser):
                                  MapDataParserViomi.image_to_map(room[1] + image_top),
                                  MapDataParserViomi.image_to_map(room[2] + image_left),
                                  MapDataParserViomi.image_to_map(room[3] + image_top))
+        if bg_image_use:
+                    return ImageData(image_size, image_top, image_left, image_height, image_width, image_config,
+                         image, MapDataParserViomi.map_to_image,
+                         additional_layers={DRAWABLE_CLEANED_AREA: cleaned_areas_layer, DRAWABLE_BG_IMAGE: bg_image_layer}), rooms, cleaned_areas
+        
         return ImageData(image_size, image_top, image_left, image_height, image_width, image_config,
                          image, MapDataParserViomi.map_to_image,
                          additional_layers={DRAWABLE_CLEANED_AREA: cleaned_areas_layer}), rooms, cleaned_areas

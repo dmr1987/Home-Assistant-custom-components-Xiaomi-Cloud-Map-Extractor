@@ -14,7 +14,8 @@ _LOGGER = logging.getLogger(__name__)
 class MapDataParserRoidmi(MapDataParser):
 
     @staticmethod
-    def parse(raw: bytes, colors, drawables, texts, sizes, image_config) -> MapData:
+    def parse(raw: bytes, colors, drawables, texts, sizes, image_config, 
+                    bg_image_use, bg_image_path, bg_image_alpha) -> MapData:
         scale = float(image_config[CONF_SCALE])
         map_image_size = raw.find(bytes([127, 123]))
         map_image = raw[16:map_image_size + 1]
@@ -30,7 +31,8 @@ class MapDataParserRoidmi(MapDataParser):
         map_data = MapData(0, 1000)
         map_data.rooms = MapDataParserRoidmi.parse_rooms(map_info)
         image = MapDataParserRoidmi.parse_image(map_image, width, height, x_min_calc, y_min_calc, resolution,
-                                                colors, image_config, map_data.rooms)
+                                                colors, image_config, map_data.rooms, 
+                                                bg_image_use, bg_image_path, bg_image_alpha)
         map_data.image = image
         map_data.path = MapDataParserRoidmi.parse_path(map_info)
         map_data.vacuum_position = MapDataParserRoidmi.parse_vacuum_position(map_info)
@@ -64,7 +66,8 @@ class MapDataParserRoidmi(MapDataParser):
 
     @staticmethod
     def parse_image(map_image: bytes, width: int, height: int, min_x: float, min_y: float, resolution: float,
-                    colors: Dict, image_config: Dict, rooms: Dict[int, Room]) -> ImageData:
+                    colors: Dict, image_config: Dict, rooms: Dict[int, Room], 
+                    bg_image_use, bg_image_path, bg_image_alpha) -> ImageData:
         image_top = 0
         image_left = 0
         room_numbers = rooms.keys()
@@ -77,8 +80,15 @@ class MapDataParserRoidmi(MapDataParser):
             rooms[number].y0 = p1.y
             rooms[number].x1 = p2.x
             rooms[number].y1 = p2.y
+
+        if bg_image_use:
+            bg_image_layer = ImageHandlerViomi.load_bg_image(int(image.width), int(image.height), bg_image_alpha, bg_image_path)
+
         return ImageData(width * height, image_top, image_left, height, width, image_config, image,
                          lambda p: MapDataParserRoidmi.map_to_image(p, resolution, min_x, min_y))
+                         #MAYBE ADD AS IN VIOMI VACUUM  
+                         #additional_layers={DRAWABLE_BG_IMAGE: bg_image_layer}
+
 
     @staticmethod
     def parse_path(map_info: dict) -> Path:

@@ -14,7 +14,8 @@ class XiaomiCloudVacuum:
         self._device_id = device_id
         self.model = model
 
-    def get_map(self, map_name, colors, drawables, texts, sizes, image_config, store_map_path=None) \
+    def get_map(self, map_name, colors, drawables, texts, sizes, image_config, store_map_path=None, 
+        bg_image_use=False, bg_image_path="/config/www/map_tmp.png", bg_image_alpha=50) \
             -> Tuple[Optional[MapData], bool]:
         response = self.get_raw_map_data(map_name)
         if response is None:
@@ -25,7 +26,7 @@ class XiaomiCloudVacuum:
             raw_map_file.write(response)
             raw_map_file.close()
             map_stored = True
-        map_data = self.decode_map(response, colors, drawables, texts, sizes, image_config)
+        map_data = self.decode_map(response, colors, drawables, texts, sizes, image_config, bg_image_use, bg_image_path, bg_image_alpha)
         if map_data is None:
             return None, map_stored
         map_data.map_name = map_name
