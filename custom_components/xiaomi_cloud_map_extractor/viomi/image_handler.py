@@ -6,6 +6,8 @@ from PIL.Image import Image as ImageType
 
 from custom_components.xiaomi_cloud_map_extractor.common.image_handler import ImageHandler
 from custom_components.xiaomi_cloud_map_extractor.const import *
+from custom_components.xiaomi_cloud_map_extractor.types import Colors, ImageConfig
+from custom_components.xiaomi_cloud_map_extractor.viomi.parsing_buffer import ParsingBuffer
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,7 +23,8 @@ class ImageHandlerViomi(ImageHandler):
     MAP_SELECTED_ROOM_MAX = 109
 
     @staticmethod
-    def parse(buf, width, height, colors, image_config, draw_cleaned_area) \
+    def parse(buf: ParsingBuffer, width: int, height: int, colors: Colors, image_config: ImageConfig,
+              draw_cleaned_area: bool) \
             -> Tuple[ImageType, Dict[int, Tuple[int, int, int, int]], Set[int], Optional[ImageType]]:
         rooms = {}
         cleaned_areas = set()
@@ -88,6 +91,4 @@ class ImageHandlerViomi(ImageHandler):
                     (int(trimmed_width * scale), int(trimmed_height * scale)), resample=Image.NEAREST)
         if len(unknown_pixels) > 0:
             _LOGGER.warning('unknown pixel_types: %s', unknown_pixels)
-
         return image, rooms, cleaned_areas, cleaned_areas_layer
-
