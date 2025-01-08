@@ -1,9 +1,12 @@
 [![HACS Default][hacs_shield]][hacs]
 [![GitHub Latest Release][releases_shield]][latest_release]
 [![GitHub All Releases][downloads_total_shield]][releases]
-[![Community Forum][community_forum_shield]][community_forum]
-[![Buy me a coffee][buy_me_a_coffee_shield]][buy_me_a_coffee]
+[![Community Forum][community_forum_shield]][community_forum]<!-- piotrmachowski_support_badges_start -->
+[![Ko-Fi][ko_fi_shield]][ko_fi]
+[![buycoffee.to][buycoffee_to_shield]][buycoffee_to]
 [![PayPal.Me][paypal_me_shield]][paypal_me]
+[![Revolut.Me][revolut_me_shield]][revolut_me]
+<!-- piotrmachowski_support_badges_end -->
 
 
 [hacs_shield]: https://img.shields.io/static/v1.svg?label=HACS&message=Default&style=popout&color=green&labelColor=41bdf5&logo=HomeAssistantCommunityStore&logoColor=white
@@ -18,16 +21,11 @@
 [community_forum_shield]: https://img.shields.io/static/v1.svg?label=%20&message=Forum&style=popout&color=41bdf5&logo=HomeAssistant&logoColor=white
 [community_forum]: https://community.home-assistant.io/t/xiaomi-cloud-vacuum-map-extractor/231292
 
-[buy_me_a_coffee_shield]: https://img.shields.io/static/v1.svg?label=%20&message=Buy%20me%20a%20coffee&color=6f4e37&logo=buy%20me%20a%20coffee&logoColor=white
-[buy_me_a_coffee]: https://www.buymeacoffee.com/PiotrMachowski
-
-[paypal_me_shield]: https://img.shields.io/static/v1.svg?label=%20&message=PayPal.Me&logo=paypal
-[paypal_me]: https://paypal.me/PiMachowski
 
 
 # Xiaomi Cloud Map Extractor
 
-This custom integration provides a way to present a live view of a map for Xiaomi, Roborock, Viomi and Roidmi vacuums.
+This custom integration provides a way to present a live view of a map for Xiaomi, Roborock, Viomi, Roidmi and Dreame vacuums.
 ([Supported devices](#supported-devices))
 
 <img src="https://raw.githubusercontent.com/PiotrMachowski/Home-Assistant-custom-components-Xiaomi-Cloud-Map-Extractor/master/images/map_no_rooms.png" width=48%>  <img src="https://raw.githubusercontent.com/PiotrMachowski/Home-Assistant-custom-components-Xiaomi-Cloud-Map-Extractor/master/images/map_rooms.png" width=48%>
@@ -41,7 +39,7 @@ To do it search for `Xiaomi Cloud Map Extractor` in *Integrations* section.
 
 ### Manual
 
-To install this integration manually you have to download [*xiaomi_cloud_map_extractor.zip*](https://github.com/PiotrMachowski/Home-Assistant-custom-components-Xiaomi-Cloud-Map-Extractor/releases/latest/download/xiaomi_cloud_map_extractor.zip) extract its contents to `config/custom_components/xiaomi_cloud_map_extractor` directory:
+To install this integration manually you have to download [*xiaomi_cloud_map_extractor.zip*](https://github.com/PiotrMachowski/Home-Assistant-custom-components-Xiaomi-Cloud-Map-Extractor/releases/latest/download/xiaomi_cloud_map_extractor.zip) and extract its contents to `config/custom_components/xiaomi_cloud_map_extractor` directory:
 ```bash
 mkdir -p custom_components/xiaomi_cloud_map_extractor
 cd custom_components/xiaomi_cloud_map_extractor
@@ -120,12 +118,16 @@ camera:
       color_obstacle: [0, 0, 0, 127]
       color_obstacle_with_photo: [0, 0, 0, 127]
       color_path: [147, 194, 238]
+      color_mop_path: [255, 255, 255, 0x5F]
       color_goto_path: [0, 255, 0]
       color_predicted_path: [255, 255, 0, 0]
       color_cleaned_area: [127, 127, 127, 127]
       color_zones: [0xAD, 0xD8, 0xFF, 0x8F]
       color_zones_outline: [0xAD, 0xD8, 0xFF]
       color_virtual_walls: [255, 0, 0]
+      color_carpets: [0xA9, 0xF7, 0xA9 ]
+      color_no_carpet_zones: [255, 33, 55, 0x5F]
+      color_no_carpet_zones_outline: [255, 0, 0]
       color_new_discovered_area: [64, 64, 64]
       color_no_go_zones: [255, 33, 55, 127]
       color_no_go_zones_outline: [255, 0, 0]
@@ -159,6 +161,8 @@ camera:
       - goto_path
       - ignored_obstacles
       - ignored_obstacles_with_photo
+      - mop_path
+      - no_carpet_zones
       - no_go_zones
       - no_mopping_zones
       - obstacles
@@ -191,12 +195,15 @@ camera:
     sizes:
       charger_radius: 4
       vacuum_radius: 6.5
+      path_width: 1
+      mop_path_width: 16
       obstacle_radius: 3
       ignored_obstacle_radius: 3
       obstacle_with_photo_radius: 3
       ignored_obstacle_with_photo_radius: 3
     attributes:
       - calibration_points
+      - carpet_map
       - charger
       - cleaned_rooms
       - country
@@ -206,6 +213,8 @@ camera:
       - image
       - is_empty
       - map_name
+      - mop_path
+      - no_carpet_areas
       - no_go_areas
       - no_mopping_areas
       - obstacles
@@ -253,7 +262,7 @@ camera:
 | `store_map_raw` | boolean | false | default: `false` | Enables storing raw map data in `store_map_path` directory ([more info](#retrieving-map)). Xiaomi map can be opened with [RoboMapViewer](https://github.com/marcelrv/XiaomiRobotVacuumProtocol/tree/master/RRMapFile). |
 | `store_map_image` | boolean | false | default: `false` | Enables storing map image in `store_map_path` path with name `map_image_<device_model>.png` |
 | `store_map_path` | string | false | default: `/tmp` | Storing map data directory |
-| `force_api` | string | false | One of: `xiaomi`, `viomi`, `roidmi` | Forces usage of specific API. |
+| `force_api` | string | false | One of: `xiaomi`, `viomi`, `roidmi`, `dreame` | Forces usage of specific API. |
 
 #### Colors configuration
 
@@ -264,8 +273,10 @@ camera:
 
   | Color name | Description |
   | --- | --- |
-  | `color_charger` | Charger position |
-  | `color_cleaned_area` | Fill of area that already has been cleaned (Viomi) |
+  | `color_carpets` | Carpets fill, in checkboard pattern |
+  | `color_charger` | Charger fill |
+  | `color_charger_outline` | Charger outline |
+  | `color_cleaned_area` | Fill of area that already has been cleaned |
   | `color_goto_path` | Path for goto mode |
   | `color_grey_wall` | Obstacles (e.g. chairs, table legs) |
   | `color_ignored_obstacle_with_photo` | Ignored obstacle with photo mark on a map |
@@ -274,7 +285,9 @@ camera:
   | `color_map_outside` | Map outside |
   | `color_map_wall_v2` | Walls (for software with rooms support) |
   | `color_map_wall` | Walls (for software without rooms support) |
-  | `color_new_discovered_area` | Newly discovered areas (Viomi) |
+  | `color_new_discovered_area` | Newly discovered areas |
+  | `color_no_carpet_zones_outline` | Outline of no-carpet zones |
+  | `color_no_carpet_zones` | Fill of no-carpet zones |
   | `color_no_go_zones_outline` | Outline of no-go zones |
   | `color_no_go_zones` | Fill of no-go zones |
   | `color_no_mop_zones_outline` | Outline of no-mopping zones |
@@ -282,8 +295,10 @@ camera:
   | `color_obstacle_with_photo` | Obstacle with photo mark on a map |
   | `color_obstacle` | Obstacle mark on a map |
   | `color_path` | Path of a vacuum |
+  | `color_mop_path` | Mopped path of a vacuum (for vacuums that support mopping) |
   | `color_predicted_path` | Predicted path to a point in goto mode |
-  | `color_robo` | Vacuum position |
+  | `color_robo` | Vacuum fill |
+  | `color_robo_outline` | Vacuum outline |
   | `color_room_names` | Room names (if available) |
   | `color_scan` | Areas not assigned to any room (for software with rooms support) |
   | `color_unknown` | Other areas |
@@ -309,6 +324,8 @@ camera:
   - `goto_path`
   - `ignored_obstacles_with_photo`
   - `ignored_obstacles`
+  - `mop_path`
+  - `no_carpet_zones`
   - `no_go_zones`
   - `no_mopping_zones`
   - `obstacles_with_photo`
@@ -349,12 +366,14 @@ fc-list | grep ttf | sed "s/.*\///"| sed "s/ttf.*/ttf/"
 
   | Parameter | Type | Required | Default value | Description |
   |---|---|---|---|---|
-  | `charger_radius` | float | false | 4 | Radius of a charger circle. |
-  | `vacuum_radius` | float | false | 4 | Radius of a vacuum circle. |
+  | `charger_radius` | float | false | 6 | Radius of a charger circle. |
+  | `vacuum_radius` | float | false | 6 | Radius of a vacuum semi-circle. |
   | `obstacle_radius` | float | false | 3 | Radius of an obstacle circle. |
   | `ignored_obstacle_radius` | float | false | 3 | Radius of an ignored obstacle circle circle. |
   | `obstacle_with_photo_radius` | float | false | 3 | Radius of an obstacle with photo circle. |
   | `ignored_obstacle_with_photo_radius` | float | false | 3 | Radius of an ignored obstacle with photo circle. |
+  | `path_width` | float | false | 1 | Width of path line. |
+  | `mop_path_width` | float | false | equal to vacuum radius | Width of mop path line. |
 
 #### Attributes configuration
 
@@ -362,6 +381,7 @@ fc-list | grep ttf | sed "s/.*\///"| sed "s/ttf.*/ttf/"
   Available values:
   - `calibration_points` - Calculated calibration points for [Lovelace Xiaomi Vacuum Map card](https://github.com/PiotrMachowski/lovelace-xiaomi-vacuum-map-card).
      <img src="https://raw.githubusercontent.com/PiotrMachowski/Home-Assistant-custom-components-Xiaomi-Cloud-Map-Extractor/master/images/map_card.gif" width=50%>
+  - `carpet_map`
   - `charger`
   - `cleaned_rooms`
   - `country`
@@ -373,6 +393,8 @@ fc-list | grep ttf | sed "s/.*\///"| sed "s/ttf.*/ttf/"
   - `image`
   - `is_empty`
   - `map_name`
+  - `mop_path`
+  - `no_carpet_areas`
   - `no_go_areas`
   - `no_mopping_areas`
   - `obstacles_with_photo`
@@ -414,6 +436,9 @@ This integration was tested on following vacuums:
    - `roborock.vacuum.a08` (Roborock S6 Pure)
    - `roborock.vacuum.a10` (Roborock S6 MaxV)
    - `roborock.vacuum.a15` (Roborock S7)
+   - `roborock.vacuum.a19` (Roborocka S4 Max)
+   - `roborock.vacuum.a27` (Roborock S7 MaxV)
+   - `roborock.vacuum.a70` (Roborock S8 Pro Ultra)
  - Viomi map format:
    - `viomi.vacuum.v6` (Viomi Vacuum V2 Pro, Xiaomi Mijia STYJ02YM, Mi Robot Vacuum Mop Pro)
    - `viomi.vacuum.v7` (Mi Robot Vacuum-Mop Pro)
@@ -422,11 +447,20 @@ This integration was tested on following vacuums:
  - Roidmi map format:
    - `roidmi.vacuum.v60` (Roidmi EVE Plus)
    - `viomi.vacuum.v18` (Viomi S9)
-
-## Unsupported devices
-
-At this moment this integration is known to not work with following vacuums:
- - Dreame ([#126](https://github.com/PiotrMachowski/Home-Assistant-custom-components-Xiaomi-Cloud-Map-Extractor/issues/126)):
+   - `viomi.vacuum.v38` (Viomi V5 Pro)
+   - `zhimi.vacuum.xa1` (Lydsto R1)
+   - `chuangmi.vacuum.hmi707` (IMILAB V1 Vacuum)
+ - Dreame map format:
+   - `dreame.vacuum.mc1808` (Xiaomi Mi Mop/Xiaomi Mijia 1C)
+   - `dreame.vacuum.p2008` (Dreame F9)
+   - `dreame.vacuum.p2009` (Dreame D9)
+   - `dreame.vacuum.p2028` (Dreame Z10 Pro)
+   - `dreame.vacuum.p2029` (Dreame L10 Pro)
+   - `dreame.vacuum.p2036` (Trouver LDS Cleaner)
+   - `dreame.vacuum.p2041o` (Xiaomi Mop 2 Pro+)
+   - `dreame.vacuum.p2140` (Mijia Robot Vacuum-Mop 2C)
+   - `dreame.vacuum.p2157` (MOVA L600)
+   - `dreame.vacuum.p2259` (Dreame D9 Max)
 
 ## Retrieving map
 
@@ -459,4 +493,90 @@ This integration wouldn't exist without following projects:
  - [Valetudo](https://github.com/Hypfer/Valetudo) by [@Hypfer](https://github.com/Hypfer)
 
 
-<a href="https://www.buymeacoffee.com/PiotrMachowski" target="_blank"><img src="https://bmc-cdn.nyc3.digitaloceanspaces.com/BMC-button-images/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
+
+<!-- piotrmachowski_support_links_start -->
+
+## Support
+
+If you want to support my work with a donation you can use one of the following platforms:
+
+<table>
+  <tr>
+    <th>Platform</th>
+    <th>Payment methods</th>
+    <th>Link</th>
+    <th>Comment</th>
+  </tr>
+  <tr>
+    <td>Ko-fi</td>
+    <td>
+      <li>PayPal</li>
+      <li>Credit card</li>
+    </td>
+    <td>
+      <a href='https://ko-fi.com/piotrmachowski' target='_blank'><img height='35px' src='https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+    </td>
+    <td>
+      <li>No fees</li>
+      <li>Single or monthly payment</li>
+    </td>
+  </tr>
+  <tr>
+    <td>buycoffee.to</td>
+    <td>
+      <li>BLIK</li>
+      <li>Bank transfer</li>
+    </td>
+    <td>
+      <a href="https://buycoffee.to/piotrmachowski" target="_blank"><img src="https://buycoffee.to/btn/buycoffeeto-btn-primary.svg" height="35px" alt="Postaw mi kawę na buycoffee.to"></a>
+    </td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>PayPal</td>
+    <td>
+      <li>PayPal</li>
+    </td>
+    <td>
+      <a href="https://paypal.me/PiMachowski" target="_blank"><img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" border="0" alt="PayPal Logo" height="35px" style="height: auto !important;width: auto !important;"></a>
+    </td>
+    <td>
+      <li>No fees</li>
+    </td>
+  </tr>
+  <tr>
+    <td>Revolut</td>
+    <td>
+      <li>Revolut</li>
+      <li>Credit Card</li>
+    </td>
+    <td>
+      <a href="https://revolut.me/314ma" target="_blank"><img src="https://www.revolut.com/favicon/android-chrome-192x192.png" height="35px" alt="Revolut"></a>
+    </td>
+    <td>
+      <li>No fees</li>
+    </td>
+  </tr>
+</table>
+
+
+[ko_fi_shield]: https://img.shields.io/static/v1.svg?label=%20&message=Ko-Fi&color=F16061&logo=ko-fi&logoColor=white
+
+[ko_fi]: https://ko-fi.com/piotrmachowski
+
+[buycoffee_to_shield]: https://shields.io/badge/buycoffee.to-white?style=flat&labelColor=white&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABhmlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw1AUhU9TpaIVh1YQcchQnayIijhKFYtgobQVWnUweemP0KQhSXFxFFwLDv4sVh1cnHV1cBUEwR8QVxcnRRcp8b6k0CLGC4/3cd49h/fuA4R6malmxzigapaRisfEbG5FDLzChxB6MIZ+iZl6Ir2QgWd93VM31V2UZ3n3/Vm9St5kgE8knmW6YRGvE09vWjrnfeIwK0kK8TnxqEEXJH7kuuzyG+eiwwLPDBuZ1BxxmFgstrHcxqxkqMRTxBFF1ShfyLqscN7irJarrHlP/sJgXltOc53WEOJYRAJJiJBRxQbKsBClXSPFRIrOYx7+QcefJJdMrg0wcsyjAhWS4wf/g9+zNQuTE25SMAZ0vtj2xzAQ2AUaNdv+PrbtxgngfwautJa/UgdmPkmvtbTIEdC3DVxctzR5D7jcAQaedMmQHMlPSygUgPcz+qYcELoFulfduTXPcfoAZGhWSzfAwSEwUqTsNY93d7XP7d+e5vx+AIahcq//o+yoAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH5wETCy4vFNqLzwAAAVpJREFUOMvd0rFLVXEYxvHPOedKJnKJhrDLuUFREULE7YDCMYj+AydpsCWiaKu29hZxiP4Al4aWwC1EdFI4Q3hqEmkIBI8ZChWXKNLLvS0/Qcza84V3enm/7/s878t/HxGkeTaIGziP+EB918nawu7Dq1d0e1+2J2bepnk2jFEUVVF+qKV51o9neBCaugfge70keoxxUbSWjrQ+4SUyzKZ5NlnDZdzGG7w4DIh+dtZEFntDA98l8S0MYwctNGrYz9WqKJePFLq80g5Sr+EHlnATp+NA+4qLaZ7FfzMrzbMBjGEdq8GrJMZnvAvFC/8wfAwjWMQ8XmMzaW9sdevNRgd3MFhvNpbaG1u/Dk2/hOc4gadVUa7Um425qii/7Z+xH9O4jwW8Cqv24Tru4hyeVEU588cfBMgpPMI9nMFe0BkFzVOYrYqycyQgQJLwTC2cDZCPeF8V5Y7jGb8BUpRicy7OU5MAAAAASUVORK5CYII=
+
+[buycoffee_to]: https://buycoffee.to/piotrmachowski
+
+[buy_me_a_coffee_shield]: https://img.shields.io/static/v1.svg?label=%20&message=Buy%20me%20a%20coffee&color=6f4e37&logo=buy%20me%20a%20coffee&logoColor=white
+
+[buy_me_a_coffee]: https://www.buymeacoffee.com/PiotrMachowski
+
+[paypal_me_shield]: https://img.shields.io/static/v1.svg?label=%20&message=PayPal.Me&logo=paypal
+
+[paypal_me]: https://paypal.me/PiMachowski
+
+[revolut_me_shield]: https://img.shields.io/static/v1.svg?label=%20&message=Revolut&logo=revolut
+
+[revolut_me]: https://revolut.me/314ma
+<!-- piotrmachowski_support_links_end -->
