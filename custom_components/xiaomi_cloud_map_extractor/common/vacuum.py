@@ -1,5 +1,4 @@
 import logging
-
 from abc import abstractmethod
 from typing import Optional, Tuple
 
@@ -28,8 +27,8 @@ class XiaomiCloudVacuum:
                 image_config: ImageConfig, 
                 bg_image_use: Optional[bool]=False, 
                 bg_image_path: Optional[str]="/config/www/map_tmp.png", 
-                bg_image_alpha: Optional[int]=50,                
-			  store_map_path: Optional[str] = None) -> Tuple[Optional[MapData], bool]:
+                bg_image_alpha: Optional[int]=50,
+                store_map_path: Optional[str] = None) -> Tuple[Optional[MapData], bool]:
         response = self.get_raw_map_data(map_name)
         if response is None:
             _LOGGER.debug("get_map (get_raw_map_data) response is empty")
